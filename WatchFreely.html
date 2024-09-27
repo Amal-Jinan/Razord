@@ -54,6 +54,7 @@
             drawBullets();
             drawTankBullets();
             updateTanks();
+            updateBullets(); // Update player bullets
             updateTankBullets();
             checkCollisions();
             requestAnimationFrame(gameLoop);
@@ -113,6 +114,16 @@
                 // Reduce shoot cooldown
                 if (tank.shootCooldown > 0) {
                     tank.shootCooldown--;
+                }
+            });
+        }
+
+        function updateBullets() {
+            bullets.forEach((bullet, index) => {
+                bullet.y -= 5; // Move the player bullet upwards
+                // Remove bullet if it goes off screen
+                if (bullet.y < 0) {
+                    bullets.splice(index, 1);
                 }
             });
         }
