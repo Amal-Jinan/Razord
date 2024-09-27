@@ -174,6 +174,10 @@
                 player.x -= 10; // Move left
             } else if (event.key === "ArrowRight" && player.x < canvas.width - player.width) {
                 player.x += 10; // Move right
+            } else if (event.key === "ArrowUp" && player.y > 0) {
+                player.y -= 10; // Move up
+            } else if (event.key === "ArrowDown" && player.y < canvas.height - player.height) {
+                player.y += 10; // Move down
             } else if (event.key === " ") {
                 bullets.push({ x: player.x + player.width / 2, y: player.y, width: 5, height: 10 });
             }
