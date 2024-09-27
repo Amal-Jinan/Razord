@@ -95,6 +95,30 @@
         .about-button:active {
             transform: scale(0.95);
         }
+
+        /* Neon Button for T@nk0Mania */
+        .tankmania-button {
+            background-color: #0f0; /* Neon green background */
+            color: black;
+            border: none;
+            padding: 20px 40px;
+            font-size: 2em; /* Make it bigger */
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.7), 0 0 40px rgba(0, 255, 0, 0.5);
+            transition: transform 0.3s;
+            margin-top: 30px; /* Add some space above the button */
+        }
+
+        .tankmania-button:hover {
+            transform: scale(1.1); /* Slightly enlarge on hover */
+        }
+
+        .tankmania-button:active {
+            transform: scale(0.9); /* Shrink on click */
+        }
     </style>
 </head>
 <body>
@@ -120,6 +144,13 @@
         <div class="center-button">
             <a href="https://flow-hype.github.io/Razord/about.html" target="_blank">
                 <button class="about-button">About HYPE</button>
+            </a>
+        </div>
+
+        <!-- New big neon button for T@nk0Mania -->
+        <div class="center-button">
+            <a href="https://flowhype.github.io/Razord/WatchFreely.html" target="_blank">
+                <button class="tankmania-button">T@nk0Mania</button>
             </a>
         </div>
     </section>
