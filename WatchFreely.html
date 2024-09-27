@@ -25,18 +25,25 @@
         canvas.height = window.innerHeight;
 
         let tanks = [];
-        let player = { x: canvas.width / 2, y: canvas.height - 50, width: 30, height: 30, radius: 50 }; // Added radius for the bubble
+        let player = { x: canvas.width / 2, y: canvas.height - 50, width: 30, height: 30, radius: 50, speed: 15 };
         let bullets = [];
         let tankBullets = [];
+        let powerUps = [];
         let level = 1;
         let score = 0;
+        let playerSpeed = 15;
+        let tankSpeed = 2 + level * 0.5;
+        let invincible = false;
+        let powerUpDuration = 0;
 
-        // Adjust player speed and tank speed here
-        const playerSpeed = 15; // Increased player movement speed
-        const tankSpeed = 2 + level * 0.5; // Increased tank movement speed
+        const powerUpTypes = {
+            SPEED: 'speed',
+            INVINCIBLE: 'invincible'
+        };
 
         function init() {
             tanks = [];
+            powerUps = [];
             for (let i = 0; i < level * 5; i++) {
                 tanks.push({
                     x: Math.random() * (canvas.width - 40),
@@ -45,9 +52,10 @@
                     height: 40,
                     speed: tankSpeed,
                     direction: Math.random() < 0.5 ? 1 : -1,
-                    shootCooldown: 0 // Cooldown for shooting
+                    shootCooldown: 0
                 });
             }
+            spawnPowerUp();
             requestAnimationFrame(gameLoop);
         }
 
@@ -57,19 +65,20 @@
             drawTanks();
             drawBullets();
             drawTankBullets();
+            drawPowerUps();
             updateTanks();
-            updateBullets(); // Update player bullets
+            updateBullets();
             updateTankBullets();
+            updatePowerUps();
             checkCollisions();
+            handlePowerUpEffects();
             requestAnimationFrame(gameLoop);
         }
 
         function drawPlayer() {
-            // Draw the player tank
-            ctx.fillStyle = "green";
+            ctx.fillStyle = invincible ? "blue" : "green";
             ctx.fillRect(player.x, player.y, player.width, player.height);
 
-            // Draw the protective bubble around the player
             ctx.strokeStyle = "rgba(0, 255, 255, 0.5)";
             ctx.lineWidth = 5;
             ctx.beginPath();
@@ -98,32 +107,32 @@
             });
         }
 
+        function drawPowerUps() {
+            powerUps.forEach(powerUp => {
+                ctx.fillStyle = powerUp.type === powerUpTypes.SPEED ? "purple" : "cyan";
+                ctx.fillRect(powerUp.x, powerUp.y, powerUp.width, powerUp.height);
+            });
+        }
+
         function updateTanks() {
             tanks.forEach(tank => {
-                // Move tank down the screen
                 tank.y += tank.speed;
+                tank.x += tank.direction * 3;
 
-                // Move tank left or right based on direction
-                tank.x += tank.direction * 3; // Increased horizontal movement speed
-
-                // Reverse direction when hitting canvas boundaries
                 if (tank.x < 0 || tank.x + tank.width > canvas.width) {
-                    tank.direction *= -1; // Change direction
+                    tank.direction *= -1;
                 }
 
-                // Respawn tank at the top if it goes off-screen
                 if (tank.y > canvas.height) {
                     tank.y = -tank.height;
                     tank.x = Math.random() * (canvas.width - tank.width);
                 }
 
-                // Check if the tank can shoot
                 if (tank.shootCooldown <= 0 && Math.abs(tank.x - player.x) < 200 && tank.y < canvas.height - 50) {
                     shootTankBullet(tank);
-                    tank.shootCooldown = 60; // Set cooldown to 60 frames
+                    tank.shootCooldown = 60;
                 }
 
-                // Reduce shoot cooldown
                 if (tank.shootCooldown > 0) {
                     tank.shootCooldown--;
                 }
@@ -131,10 +140,8 @@
         }
 
         function updateBullets() {
-            // Update the player bullets
             bullets.forEach((bullet, index) => {
-                bullet.y -= 5; // Move the player bullet upwards
-                // Remove bullet if it goes off screen
+                bullet.y -= 5;
                 if (bullet.y < 0) {
                     bullets.splice(index, 1);
                 }
@@ -143,44 +150,49 @@
 
         function updateTankBullets() {
             tankBullets.forEach((tankBullet, index) => {
-                tankBullet.y += 5; // Move the tank bullet down
-                // Remove bullet if it goes off screen
+                tankBullet.y += 5;
                 if (tankBullet.y > canvas.height) {
                     tankBullets.splice(index, 1);
                 }
             });
         }
 
-        function shootTankBullet(tank) {
-            tankBullets.push({
-                x: tank.x + tank.width / 2 - 2.5, // Center bullet on the tank
-                y: tank.y + tank.height,
-                width: 5,
-                height: 10
+        function updatePowerUps() {
+            powerUps.forEach((powerUp, index) => {
+                powerUp.y += 2;
+                if (powerUp.y > canvas.height) {
+                    powerUps.splice(index, 1);
+                }
             });
         }
 
-        function checkCollisions() {
-            // Check player-bullet collisions
-            tankBullets.forEach((tankBullet, bulletIndex) => {
-                if (tankBullet.x < player.x + player.width &&
-                    tankBullet.x + tankBullet.width > player.x &&
-                    tankBullet.y < player.y + player.height &&
-                    tankBullet.y + tankBullet.height > player.y) {
-                    // Collision detected, handle it (e.g., end game)
-                    alert("You were hit! Game Over.");
-                    document.location.reload(); // Restart the game
-                }
-            });
+        function spawnPowerUp() {
+            const powerUp = {
+                x: Math.random() * (canvas.width - 30),
+                y: -30,
+                width: 30,
+                height: 30,
+                type: Math.random() < 0.5 ? powerUpTypes.SPEED : powerUpTypes.INVINCIBLE
+            };
+            powerUps.push(powerUp);
+        }
 
-            // Check bullet-tank collisions
+        function handlePowerUpEffects() {
+            if (powerUpDuration > 0) {
+                powerUpDuration--;
+            } else {
+                playerSpeed = 15;
+                invincible = false;
+            }
+        }
+
+        function checkCollisions() {
             bullets.forEach((bullet, bulletIndex) => {
                 tanks.forEach((tank, tankIndex) => {
                     if (bullet.x < tank.x + tank.width &&
                         bullet.x + bullet.width > tank.x &&
                         bullet.y < tank.y + tank.height &&
                         bullet.y + bullet.height > tank.y) {
-                        // Remove the tank and bullet
                         tanks.splice(tankIndex, 1);
                         bullets.splice(bulletIndex, 1);
                         score += 10;
@@ -192,44 +204,42 @@
                 });
             });
 
-            // Check if any tank touches the protective bubble
-            tanks.forEach((tank, tankIndex) => {
-                const tankCenterX = tank.x + tank.width / 2;
-                const tankCenterY = tank.y + tank.height / 2;
-                const distance = Math.sqrt(
-                    (tankCenterX - (player.x + player.width / 2)) ** 2 +
-                    (tankCenterY - (player.y + player.height / 2)) ** 2
-                );
-
-                // Check if the tank is within the radius of the bubble
-                if (distance < player.radius) {
-                    tanks.splice(tankIndex, 1); // Remove the tank
-                    score += 10; // Increment score
+            powerUps.forEach((powerUp, index) => {
+                if (powerUp.x < player.x + player.width &&
+                    powerUp.x + powerUp.width > player.x &&
+                    powerUp.y < player.y + player.height &&
+                    powerUp.y + powerUp.height > player.y) {
+                    activatePowerUp(powerUp.type);
+                    powerUps.splice(index, 1);
                 }
             });
         }
 
+        function activatePowerUp(type) {
+            if (type === powerUpTypes.SPEED) {
+                playerSpeed = 30;
+                powerUpDuration = 300;
+            } else if (type === powerUpTypes.INVINCIBLE) {
+                invincible = true;
+                powerUpDuration = 300;
+            }
+        }
+
         document.addEventListener("keydown", (event) => {
             if (event.key === "ArrowLeft" && player.x > 0) {
-                player.x -= playerSpeed; // Move left faster
+                player.x -= playerSpeed;
             } else if (event.key === "ArrowRight" && player.x < canvas.width - player.width) {
-                player.x += playerSpeed; // Move right faster
+                player.x += playerSpeed;
             } else if (event.key === "ArrowUp" && player.y > 0) {
-                player.y -= playerSpeed; // Move up faster
+                player.y -= playerSpeed;
             } else if (event.key === "ArrowDown" && player.y < canvas.height - player.height) {
-                player.y += playerSpeed; // Move down faster
+                player.y += playerSpeed;
             } else if (event.key === " ") {
-                // Create a new bullet when spacebar is pressed
                 bullets.push({ x: player.x + player.width / 2 - 2.5, y: player.y, width: 5, height: 10 });
             }
         });
 
         window.onload = init;
-        window.onresize = () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            init();
-        };
     </script>
 </body>
 </html>
