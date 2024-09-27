@@ -25,11 +25,15 @@
         canvas.height = window.innerHeight;
 
         let tanks = [];
-        let player = { x: canvas.width / 2, y: canvas.height - 50, width: 30, height: 30 };
+        let player = { x: canvas.width / 2, y: canvas.height - 50, width: 30, height: 30, radius: 50 }; // Added radius for the bubble
         let bullets = [];
         let tankBullets = [];
         let level = 1;
         let score = 0;
+
+        // Adjust player speed and tank speed here
+        const playerSpeed = 15; // Increased player movement speed
+        const tankSpeed = 2 + level * 0.5; // Increased tank movement speed
 
         function init() {
             tanks = [];
@@ -39,7 +43,7 @@
                     y: Math.random() * (canvas.height - 100),
                     width: 40,
                     height: 40,
-                    speed: 1 + level * 0.5,
+                    speed: tankSpeed,
                     direction: Math.random() < 0.5 ? 1 : -1,
                     shootCooldown: 0 // Cooldown for shooting
                 });
@@ -61,8 +65,16 @@
         }
 
         function drawPlayer() {
+            // Draw the player tank
             ctx.fillStyle = "green";
             ctx.fillRect(player.x, player.y, player.width, player.height);
+
+            // Draw the protective bubble around the player
+            ctx.strokeStyle = "rgba(0, 255, 255, 0.5)";
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.arc(player.x + player.width / 2, player.y + player.height / 2, player.radius, 0, Math.PI * 2);
+            ctx.stroke();
         }
 
         function drawTanks() {
@@ -92,7 +104,7 @@
                 tank.y += tank.speed;
 
                 // Move tank left or right based on direction
-                tank.x += tank.direction * 2; // Move tank horizontally
+                tank.x += tank.direction * 3; // Increased horizontal movement speed
 
                 // Reverse direction when hitting canvas boundaries
                 if (tank.x < 0 || tank.x + tank.width > canvas.width) {
@@ -119,6 +131,7 @@
         }
 
         function updateBullets() {
+            // Update the player bullets
             bullets.forEach((bullet, index) => {
                 bullet.y -= 5; // Move the player bullet upwards
                 // Remove bullet if it goes off screen
@@ -178,19 +191,36 @@
                     }
                 });
             });
+
+            // Check if any tank touches the protective bubble
+            tanks.forEach((tank, tankIndex) => {
+                const tankCenterX = tank.x + tank.width / 2;
+                const tankCenterY = tank.y + tank.height / 2;
+                const distance = Math.sqrt(
+                    (tankCenterX - (player.x + player.width / 2)) ** 2 +
+                    (tankCenterY - (player.y + player.height / 2)) ** 2
+                );
+
+                // Check if the tank is within the radius of the bubble
+                if (distance < player.radius) {
+                    tanks.splice(tankIndex, 1); // Remove the tank
+                    score += 10; // Increment score
+                }
+            });
         }
 
         document.addEventListener("keydown", (event) => {
             if (event.key === "ArrowLeft" && player.x > 0) {
-                player.x -= 10; // Move left
+                player.x -= playerSpeed; // Move left faster
             } else if (event.key === "ArrowRight" && player.x < canvas.width - player.width) {
-                player.x += 10; // Move right
+                player.x += playerSpeed; // Move right faster
             } else if (event.key === "ArrowUp" && player.y > 0) {
-                player.y -= 10; // Move up
+                player.y -= playerSpeed; // Move up faster
             } else if (event.key === "ArrowDown" && player.y < canvas.height - player.height) {
-                player.y += 10; // Move down
+                player.y += playerSpeed; // Move down faster
             } else if (event.key === " ") {
-                bullets.push({ x: player.x + player.width / 2, y: player.y, width: 5, height: 10 });
+                // Create a new bullet when spacebar is pressed
+                bullets.push({ x: player.x + player.width / 2 - 2.5, y: player.y, width: 5, height: 10 });
             }
         });
 
